@@ -314,6 +314,13 @@ select:focus {
   white-space: nowrap;
 }
 
+.metric-label-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .metric-subtext {
   display: block;
   margin-top: 1px;
@@ -335,6 +342,36 @@ select:focus {
 .metric-value-danger {
   color: var(--ctp-red);
   font-weight: 700;
+}
+
+.metric-help-button {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(145, 215, 227, 0.55);
+  border-radius: 999px;
+  padding: 0;
+  color: var(--ctp-sky);
+  background: rgba(145, 215, 227, 0.08);
+  font: inherit;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+}
+
+.metric-help-button:hover {
+  border-color: rgba(145, 215, 227, 0.88);
+  background: rgba(145, 215, 227, 0.16);
+}
+
+.metric-help-button:focus {
+  outline: 2px solid rgba(145, 215, 227, 0.24);
+  outline-offset: 2px;
+}
+
+.metric-help-button:active {
+  transform: translateY(1px);
 }
 
 .totals-grid {
@@ -363,6 +400,161 @@ select:focus {
   font-weight: 700;
 }
 
+.formula-dialog {
+  width: min(1100px, calc(100% - 24px));
+  max-height: calc(100dvh - 32px);
+  border: 1px solid rgba(125, 196, 228, 0.22);
+  border-radius: 22px;
+  padding: 0;
+  color: var(--text);
+  background: linear-gradient(180deg, rgba(43, 48, 69, 0.98), rgba(24, 25, 38, 0.98));
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.45);
+}
+
+.formula-dialog::backdrop {
+  background: rgba(8, 10, 18, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.formula-dialog-body {
+  padding: 18px;
+  overflow: auto;
+}
+
+.formula-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.formula-dialog-kicker {
+  margin: 0 0 4px;
+  color: var(--ctp-sky);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.formula-dialog-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.formula-dialog-overview {
+  margin: 6px 0 0;
+  max-width: 72ch;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.formula-dialog-section + .formula-dialog-section {
+  margin-top: 18px;
+}
+
+.formula-dialog-section h4 {
+  margin: 0 0 10px;
+  font-size: 0.92rem;
+}
+
+.shared-symbol-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.shared-symbol-card,
+.formula-side {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(36, 39, 58, 0.86);
+}
+
+.shared-symbol-heading,
+.formula-step-header,
+.formula-side-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.shared-symbol-heading strong,
+.formula-step-header strong {
+  font-size: 0.84rem;
+}
+
+.formula-unit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(148, 163, 184, 0.12);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.formula-expression {
+  margin-top: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
+}
+
+.formula-expression-display {
+  font-size: 0.95rem;
+}
+
+.formula-expression-fallback {
+  font-family: Consolas, "SFMono-Regular", monospace;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  color: var(--ctp-rosewater);
+}
+
+.formula-sides-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.formula-side-header {
+  align-items: flex-end;
+  margin-bottom: 10px;
+}
+
+.formula-side-header h4 {
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+.formula-side-value {
+  margin: 0;
+  color: var(--ctp-green);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.formula-steps {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.formula-step {
+  padding: 10px;
+  border: 1px solid rgba(91, 96, 120, 0.72);
+  border-radius: 14px;
+  background: rgba(24, 25, 38, 0.72);
+}
+
 @media (max-width: 960px) {
   .layout {
     grid-template-columns: 1fr;
@@ -370,6 +562,10 @@ select:focus {
 
   .form-section {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .formula-sides-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -399,5 +595,23 @@ select:focus {
   .results-table th,
   .results-table td {
     padding: 6px 6px;
+  }
+
+  .formula-dialog {
+    width: min(100% - 12px, 100%);
+    max-height: calc(100dvh - 12px);
+    border-radius: 18px;
+  }
+
+  .formula-dialog-body {
+    padding: 14px;
+  }
+
+  .formula-dialog-header {
+    flex-direction: column;
+  }
+
+  .shared-symbol-grid {
+    grid-template-columns: 1fr;
   }
 }

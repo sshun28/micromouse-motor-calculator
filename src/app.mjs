@@ -1,4 +1,5 @@
 import { calculateMotorOperatingPoint } from "./calculator.mjs";
+import { buildMetricDetails, metricRows } from "./calculation-details.mjs";
 import { deleteSavedInput, getSavedInput, listSavedInputs, saveInput } from "./saved-inputs.mjs";
 
 const form = document.querySelector("#calculator-form");
@@ -11,17 +12,12 @@ const savedInputSelect = document.querySelector("#saved-input-select");
 const saveInputButton = document.querySelector("#save-input-button");
 const loadInputButton = document.querySelector("#load-input-button");
 const deleteInputButton = document.querySelector("#delete-input-button");
-
-const metricRows = [
-  { label: "モータ回転数", unit: "rpm", key: "motorSpeedRpm", digits: 1 },
-  { label: "モータ逆起電力", unit: "V", key: "motorBackEmfV", digits: 3 },
-  { label: "モータ電流", unit: "A", key: "motorCurrentA", digits: 3 },
-  { label: "モータ Duty 比", unit: "%", key: "motorDutyPercent", digits: 1 },
-  { label: "モータ出力", unit: "W", key: "motorOutputW", digits: 3 },
-  { label: "モータ損失", unit: "W", key: "motorLossW", digits: 3 },
-  { label: "電池電流", unit: "A", key: "batteryCurrentA", digits: 3 },
-  { label: "電池出力", unit: "W", key: "batteryOutputW", digits: 3 },
-];
+const formulaDialog = document.querySelector("#formula-dialog");
+const formulaDialogTitle = document.querySelector("#formula-dialog-title");
+const formulaDialogOverview = document.querySelector("#formula-dialog-overview");
+const formulaDialogShared = document.querySelector("#formula-dialog-shared");
+const formulaDialogSides = document.querySelector("#formula-dialog-sides");
+const formulaDialogCloseButton = document.querySelector("#formula-dialog-close");
 
 const totalCards = [
   { label: "合計モータ出力", unit: "W", key: "motorOutputW", digits: 3 },
@@ -46,6 +42,8 @@ const inputFieldNames = [
   "yawRateDegS",
   "yawAccelerationDegS2",
 ];
+let latestResult = null;
+let activeMetricKey = "";
 
 function readNumber(name) {
   return Number(form.elements.namedItem(name).value);
@@ -130,8 +128,113 @@ function getDutySeverityClass(value) {
   return "metric-value";
 }
 
+function renderFormula(expression, { displayMode = true } = {}) {
+  const element = document.createElement("div");
+  element.className = `formula-expression${displayMode ? " formula-expression-display" : ""}`;
+
+  if (globalThis.katex?.renderToString) {
+    element.innerHTML = globalThis.katex.renderToString(expression, {
+      displayMode,
+      throwOnError: false,
+    });
+    return element;
+  }
+
+  element.classList.add("formula-expression-fallback");
+  element.textContent = expression;
+  return element;
+}
+
+function createUnitBadge(unit) {
+  const badge = document.createElement("span");
+  badge.className = "formula-unit";
+  badge.textContent = unit;
+  return badge;
+}
+
+function renderFormulaDialog(metricKey) {
+  if (!(formulaDialog instanceof HTMLDialogElement) || !latestResult) {
+    return;
+  }
+
+  const details = buildMetricDetails(latestResult, metricKey);
+
+  if (!details) {
+    return;
+  }
+
+  formulaDialogTitle.textContent = `${details.label} の計算の流れ`;
+  formulaDialogOverview.textContent = details.overview;
+
+  formulaDialogShared.innerHTML = "";
+  details.sharedSymbols.forEach((symbol) => {
+    const item = document.createElement("article");
+    item.className = "shared-symbol-card";
+
+    const heading = document.createElement("div");
+    heading.className = "shared-symbol-heading";
+
+    const label = document.createElement("strong");
+    label.textContent = symbol.label;
+    heading.append(label, createUnitBadge(symbol.unit));
+
+    item.append(heading, renderFormula(symbol.formula), renderFormula(symbol.substitution));
+    formulaDialogShared.append(item);
+  });
+
+  formulaDialogSides.innerHTML = "";
+  details.sides.forEach((side) => {
+    const section = document.createElement("section");
+    section.className = "formula-side";
+
+    const header = document.createElement("div");
+    header.className = "formula-side-header";
+
+    const heading = document.createElement("h4");
+    heading.textContent = `${side.side}モータ`;
+
+    const value = document.createElement("p");
+    value.className = "formula-side-value";
+    value.textContent = `${side.value} ${side.unit}`;
+
+    header.append(heading, value);
+
+    const list = document.createElement("ol");
+    list.className = "formula-steps";
+
+    side.steps.forEach((step) => {
+      const item = document.createElement("li");
+      item.className = "formula-step";
+
+      const stepHeader = document.createElement("div");
+      stepHeader.className = "formula-step-header";
+
+      const label = document.createElement("strong");
+      label.textContent = step.label;
+      stepHeader.append(label, createUnitBadge(step.unit));
+
+      item.append(stepHeader, renderFormula(step.formula), renderFormula(step.substitution));
+      list.append(item);
+    });
+
+    section.append(header, list);
+    formulaDialogSides.append(section);
+  });
+
+  activeMetricKey = metricKey;
+
+  if (!formulaDialog.open) {
+    if (typeof formulaDialog.showModal === "function") {
+      formulaDialog.showModal();
+    } else {
+      formulaDialog.setAttribute("open", "open");
+    }
+  }
+}
+
 function renderResults(result) {
   resultsBody.innerHTML = "";
+  latestResult = result;
 
   metricRows.forEach((metric) => {
     const row = document.createElement("tr");
@@ -139,8 +242,21 @@ function renderResults(result) {
     const rightClass = metric.key === "motorDutyPercent" ? getDutySeverityClass(result.right[metric.key]) : "";
     row.innerHTML = `
       <td>
-        ${metric.label}
-        <span class="metric-subtext">[${metric.unit}]</span>
+        <div class="metric-label-row">
+          <div>
+            ${metric.label}
+            <span class="metric-subtext">[${metric.unit}]</span>
+          </div>
+          <button
+            class="metric-help-button"
+            type="button"
+            data-metric-key="${metric.key}"
+            aria-label="${metric.label}の計算の流れを表示"
+            title="${metric.label}の計算の流れを表示"
+          >
+            ?
+          </button>
+        </div>
       </td>
       <td><span class="${leftClass}">${formatValue(result.left[metric.key], metric.digits)}</span></td>
       <td><span class="${rightClass}">${formatValue(result.right[metric.key], metric.digits)}</span></td>
@@ -209,10 +325,18 @@ function calculateAndRender() {
   try {
     const result = calculateMotorOperatingPoint(readInput());
     renderResults(result);
+    if (activeMetricKey && formulaDialog instanceof HTMLDialogElement && formulaDialog.open) {
+      renderFormulaDialog(activeMetricKey);
+    }
     calcStatusMessage.textContent = "";
   } catch (error) {
+    latestResult = null;
+    activeMetricKey = "";
     resultsBody.innerHTML = "";
     totalsContainer.innerHTML = "";
+    if (formulaDialog instanceof HTMLDialogElement && formulaDialog.open) {
+      formulaDialog.close();
+    }
     calcStatusMessage.textContent = error instanceof Error ? error.message : "入力値を確認してください。";
   }
 }
@@ -286,6 +410,36 @@ deleteInputButton.addEventListener("click", () => {
     setSavedStatus(`「${name}」を削除しました。`);
   } catch (error) {
     setSavedStatus(error instanceof Error ? error.message : "削除に失敗しました。");
+  }
+});
+
+resultsBody.addEventListener("click", (event) => {
+  const target = event.target;
+
+  if (!(target instanceof HTMLElement)) {
+    return;
+  }
+
+  const button = target.closest(".metric-help-button");
+
+  if (!(button instanceof HTMLButtonElement)) {
+    return;
+  }
+
+  renderFormulaDialog(button.dataset.metricKey ?? "");
+});
+
+formulaDialogCloseButton?.addEventListener("click", () => {
+  if (formulaDialog instanceof HTMLDialogElement && formulaDialog.open) {
+    activeMetricKey = "";
+    formulaDialog.close();
+  }
+});
+
+formulaDialog?.addEventListener("click", (event) => {
+  if (event.target === formulaDialog && formulaDialog instanceof HTMLDialogElement && formulaDialog.open) {
+    activeMetricKey = "";
+    formulaDialog.close();
   }
 });
 
