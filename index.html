@@ -19,6 +19,39 @@
             <h2>入力条件</h2>
           </div>
 
+          <details class="saved-inputs">
+            <summary>保存・呼び出し</summary>
+
+            <div class="saved-inputs-body">
+              <div class="saved-inputs-grid">
+                <input
+                  id="saved-input-name"
+                  name="savedInputName"
+                  type="text"
+                  maxlength="50"
+                  placeholder="保存名"
+                  autocomplete="off"
+                  aria-label="保存名"
+                />
+
+                <button id="save-input-button" class="action-button action-button-primary" type="button">保存</button>
+              </div>
+
+              <div class="saved-inputs-grid saved-inputs-grid-secondary">
+                <select id="saved-input-select" name="savedInputSelect" aria-label="保存済み条件">
+                  <option value="">保存済み条件はありません</option>
+                </select>
+
+                <div class="saved-input-actions">
+                  <button id="load-input-button" class="action-button" type="button">呼び出す</button>
+                  <button id="delete-input-button" class="action-button action-button-danger" type="button">削除</button>
+                </div>
+              </div>
+
+              <p id="saved-status-message" class="status-message" aria-live="polite"></p>
+            </div>
+          </details>
+
           <fieldset class="form-section">
             <legend>車両パラメータ</legend>
 
@@ -153,7 +186,7 @@
           </fieldset>
 
           <div class="form-actions">
-            <p id="status-message" class="status-message" aria-live="polite"></p>
+            <p id="calc-status-message" class="status-message" aria-live="polite"></p>
           </div>
         </form>
 
