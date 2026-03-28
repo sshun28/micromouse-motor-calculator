@@ -4,8 +4,201 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Micromouse Motor Calculator</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="module" src="./src/app.mjs"></script>
   </head>
   <body>
-    <h1>Micromouse Motor Calculator</h1>
+    <main class="page">
+      <header class="hero">
+        <p class="eyebrow">Static Web Calculator</p>
+        <h1>Micromouse Motor Calculator</h1>
+        <p class="lede">
+          マイクロマウスの車両諸元と動作点から、左右モータの回転数、逆起電力、電流、Duty 比、
+          出力、損失、電池側の消費を計算します。
+        </p>
+      </header>
+
+      <div class="layout">
+        <form id="calculator-form" class="panel" novalidate>
+          <div class="panel-heading">
+            <h2>入力条件</h2>
+            <p>単位はマイクロマウスで扱いやすい値のまま入力し、内部で SI 単位へ変換します。</p>
+          </div>
+
+          <fieldset class="form-section">
+            <legend>車両パラメータ</legend>
+
+            <label class="field">
+              <span>重量 [g]</span>
+              <input name="weightG" type="number" inputmode="decimal" step="0.1" value="150" required />
+            </label>
+
+            <label class="field">
+              <span>慣性モーメント [g mm^2]</span>
+              <input
+                name="inertiaGmm2"
+                type="number"
+                inputmode="decimal"
+                step="1"
+                value="150000"
+                required
+              />
+            </label>
+
+            <label class="field">
+              <span>ホイール直径 [mm]</span>
+              <input
+                name="wheelDiameterMm"
+                type="number"
+                inputmode="decimal"
+                step="0.1"
+                value="24"
+                required
+              />
+            </label>
+
+            <div class="field">
+              <span>ホイール減速比 [-]</span>
+              <div class="ratio-inputs">
+                <input
+                  name="gearRatioNumerator"
+                  type="number"
+                  inputmode="decimal"
+                  step="1"
+                  value="4"
+                  required
+                  aria-label="減速比の分子"
+                />
+                <span class="ratio-separator">:</span>
+                <input
+                  name="gearRatioDenominator"
+                  type="number"
+                  inputmode="decimal"
+                  step="1"
+                  value="1"
+                  required
+                  aria-label="減速比の分母"
+                />
+              </div>
+              <small>モータ回転数 : ホイール回転数 の比率として扱います。</small>
+            </div>
+
+            <label class="field">
+              <span>トレッド幅 [mm]</span>
+              <input name="trackWidthMm" type="number" inputmode="decimal" step="0.1" value="72" required />
+            </label>
+
+            <label class="field">
+              <span>電源電圧 [V]</span>
+              <input name="supplyVoltageV" type="number" inputmode="decimal" step="0.01" value="4.2" required />
+            </label>
+          </fieldset>
+
+          <fieldset class="form-section">
+            <legend>モータパラメータ</legend>
+
+            <label class="field">
+              <span>発生電圧定数 [mV/rpm]</span>
+              <input
+                name="backEmfConstantMVRpm"
+                type="number"
+                inputmode="decimal"
+                step="0.001"
+                value="0.38"
+                required
+              />
+            </label>
+
+            <label class="field">
+              <span>トルク定数 [mNm/A]</span>
+              <input
+                name="torqueConstantMNmA"
+                type="number"
+                inputmode="decimal"
+                step="0.001"
+                value="1.6"
+                required
+              />
+            </label>
+
+            <label class="field">
+              <span>端子間抵抗 [Ω]</span>
+              <input name="terminalResistanceOhm" type="number" inputmode="decimal" step="0.001" value="1.2" required />
+            </label>
+          </fieldset>
+
+          <fieldset class="form-section">
+            <legend>動作点</legend>
+
+            <label class="field">
+              <span>速度 [m/s]</span>
+              <input name="speedMps" type="number" inputmode="decimal" step="0.01" value="1.5" required />
+            </label>
+
+            <label class="field">
+              <span>加速度 [m/s^2]</span>
+              <input name="accelerationMps2" type="number" inputmode="decimal" step="0.01" value="5.0" required />
+            </label>
+
+            <label class="field">
+              <span>角速度 [deg/s]</span>
+              <input name="yawRateDegS" type="number" inputmode="decimal" step="0.1" value="0" required />
+            </label>
+
+            <label class="field">
+              <span>角加速度 [deg/s^2]</span>
+              <input
+                name="yawAccelerationDegS2"
+                type="number"
+                inputmode="decimal"
+                step="0.1"
+                value="0"
+                required
+              />
+            </label>
+          </fieldset>
+
+          <div class="form-actions">
+            <button type="submit">再計算</button>
+            <p id="status-message" class="status-message" aria-live="polite"></p>
+          </div>
+        </form>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>計算結果</h2>
+            <p>左右それぞれのモータ状態を表示します。負の値は逆回転や回生方向を示します。</p>
+          </div>
+
+          <div id="warnings" class="warnings" aria-live="polite"></div>
+
+          <div class="results-table-wrapper">
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th scope="col">項目</th>
+                  <th scope="col">左モータ</th>
+                  <th scope="col">右モータ</th>
+                </tr>
+              </thead>
+              <tbody id="results-body"></tbody>
+            </table>
+          </div>
+
+          <div id="totals" class="totals-grid"></div>
+        </section>
+      </div>
+
+      <section class="panel assumptions">
+        <div class="panel-heading">
+          <h2>計算モデル</h2>
+        </div>
+        <ul>
+          <li>左右輪の接地速度は `v ± ωT/2`、接地加速度は `a ± αT/2` として扱います。</li>
+          <li>駆動力は `F_L + F_R = ma`、`(F_R - F_L)T/2 = Iα` から求めます。</li>
+          <li>ギア、PWM、配線の損失は無視し、モータ損失は銅損 `I^2R` のみを表示します。</li>
+        </ul>
+      </section>
+    </main>
   </body>
 </html>
