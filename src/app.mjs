@@ -111,18 +111,13 @@ function calculateAndRender() {
   try {
     const result = calculateMotorOperatingPoint(readInput());
     renderResults(result);
-    statusMessage.textContent = `計算完了: ピニオン ${result.normalized.vehicle.pinionTeeth}T / スパー ${result.normalized.vehicle.spurTeeth}T`;
+    statusMessage.textContent = "";
   } catch (error) {
     resultsBody.innerHTML = "";
     totalsContainer.innerHTML = "";
     statusMessage.textContent = error instanceof Error ? error.message : "入力値を確認してください。";
   }
 }
-
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
-  calculateAndRender();
-});
 
 form.addEventListener("input", () => {
   calculateAndRender();
