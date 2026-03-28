@@ -2,7 +2,6 @@ import { calculateMotorOperatingPoint } from "./calculator.mjs";
 
 const form = document.querySelector("#calculator-form");
 const resultsBody = document.querySelector("#results-body");
-const warningsContainer = document.querySelector("#warnings");
 const totalsContainer = document.querySelector("#totals");
 const statusMessage = document.querySelector("#status-message");
 
@@ -34,8 +33,8 @@ function readInput() {
       weightG: readNumber("weightG"),
       inertiaGmm2: readNumber("inertiaGmm2"),
       wheelDiameterMm: readNumber("wheelDiameterMm"),
-      gearRatioNumerator: readNumber("gearRatioNumerator"),
-      gearRatioDenominator: readNumber("gearRatioDenominator"),
+      pinionTeeth: readNumber("pinionTeeth"),
+      spurTeeth: readNumber("spurTeeth"),
       trackWidthMm: readNumber("trackWidthMm"),
       supplyVoltageV: readNumber("supplyVoltageV"),
     },
@@ -64,23 +63,18 @@ function formatValue(value, digits) {
   }).format(value);
 }
 
-function renderWarnings(warnings) {
-  warningsContainer.innerHTML = "";
+function getDutySeverityClass(value) {
+  const duty = Math.abs(value);
 
-  if (warnings.length === 0) {
-    const info = document.createElement("div");
-    info.className = "warning-card";
-    info.textContent = "入力条件で計算可能です。Duty 比や回生方向は必要に応じて確認してください。";
-    warningsContainer.append(info);
-    return;
+  if (duty >= 100) {
+    return "metric-value metric-value-danger";
   }
 
-  warnings.forEach((warning) => {
-    const card = document.createElement("div");
-    card.className = "warning-card";
-    card.textContent = warning;
-    warningsContainer.append(card);
-  });
+  if (duty >= 80) {
+    return "metric-value metric-value-warning";
+  }
+
+  return "metric-value";
 }
 
 function renderResults(result) {
@@ -88,13 +82,15 @@ function renderResults(result) {
 
   metricRows.forEach((metric) => {
     const row = document.createElement("tr");
+    const leftClass = metric.key === "motorDutyPercent" ? getDutySeverityClass(result.left[metric.key]) : "";
+    const rightClass = metric.key === "motorDutyPercent" ? getDutySeverityClass(result.right[metric.key]) : "";
     row.innerHTML = `
       <td>
         ${metric.label}
         <span class="metric-subtext">[${metric.unit}]</span>
       </td>
-      <td>${formatValue(result.left[metric.key], metric.digits)}</td>
-      <td>${formatValue(result.right[metric.key], metric.digits)}</td>
+      <td><span class="${leftClass}">${formatValue(result.left[metric.key], metric.digits)}</span></td>
+      <td><span class="${rightClass}">${formatValue(result.right[metric.key], metric.digits)}</span></td>
     `;
     resultsBody.append(row);
   });
@@ -109,19 +105,16 @@ function renderResults(result) {
     `;
     totalsContainer.append(element);
   });
-
-  renderWarnings(result.warnings);
 }
 
 function calculateAndRender() {
   try {
     const result = calculateMotorOperatingPoint(readInput());
     renderResults(result);
-    statusMessage.textContent = `計算完了: 減速比 ${result.normalized.vehicle.gearRatioNumerator}:${result.normalized.vehicle.gearRatioDenominator}`;
+    statusMessage.textContent = `計算完了: ピニオン ${result.normalized.vehicle.pinionTeeth}T / スパー ${result.normalized.vehicle.spurTeeth}T`;
   } catch (error) {
     resultsBody.innerHTML = "";
     totalsContainer.innerHTML = "";
-    warningsContainer.innerHTML = "";
     statusMessage.textContent = error instanceof Error ? error.message : "入力値を確認してください。";
   }
 }

@@ -33,8 +33,8 @@ export function normalizeInputs(input) {
   assertPositive(vehicle.wheelDiameterMm, "ホイール直径");
   assertPositive(vehicle.trackWidthMm, "トレッド幅");
   assertPositive(vehicle.supplyVoltageV, "電源電圧");
-  assertPositive(vehicle.gearRatioNumerator, "減速比の分子");
-  assertPositive(vehicle.gearRatioDenominator, "減速比の分母");
+  assertPositive(vehicle.pinionTeeth, "ピニオン歯数");
+  assertPositive(vehicle.spurTeeth, "スパー歯数");
 
   assertPositive(motor.backEmfConstantMVRpm, "発生電圧定数");
   assertPositive(motor.torqueConstantMNmA, "トルク定数");
@@ -50,9 +50,9 @@ export function normalizeInputs(input) {
       massKg: vehicle.weightG / 1000,
       yawInertiaKgM2: vehicle.inertiaGmm2 * 1e-9,
       wheelRadiusM: vehicle.wheelDiameterMm / 2000,
-      gearRatio: vehicle.gearRatioNumerator / vehicle.gearRatioDenominator,
-      gearRatioNumerator: vehicle.gearRatioNumerator,
-      gearRatioDenominator: vehicle.gearRatioDenominator,
+      gearRatio: vehicle.spurTeeth / vehicle.pinionTeeth,
+      pinionTeeth: vehicle.pinionTeeth,
+      spurTeeth: vehicle.spurTeeth,
       trackWidthM: vehicle.trackWidthMm / 1000,
       supplyVoltageV: vehicle.supplyVoltageV,
     },

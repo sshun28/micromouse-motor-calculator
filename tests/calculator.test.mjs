@@ -8,8 +8,8 @@ const baseInput = {
     weightG: 150,
     inertiaGmm2: 150000,
     wheelDiameterMm: 24,
-    gearRatioNumerator: 4,
-    gearRatioDenominator: 1,
+    pinionTeeth: 13,
+    spurTeeth: 52,
     trackWidthMm: 72,
     supplyVoltageV: 4.2,
   },
@@ -33,6 +33,8 @@ test("normalizeInputs converts user units into SI-friendly values", () => {
   assert.equal(normalized.vehicle.wheelRadiusM, 0.012);
   assert.equal(normalized.vehicle.gearRatio, 4);
   assert.equal(normalized.vehicle.trackWidthM, 0.072);
+  assert.equal(normalized.vehicle.pinionTeeth, 13);
+  assert.equal(normalized.vehicle.spurTeeth, 52);
   assert.equal(normalized.motor.torqueConstantNmPerA, 0.0016);
 });
 
